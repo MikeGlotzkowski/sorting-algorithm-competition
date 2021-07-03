@@ -4,6 +4,7 @@ export RABBITMQ_ERLANG_COOKIE=$(kubectl get secret --namespace "sorting-queue" r
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm upgrade --install rabbitmq bitnami/rabbitmq \
         --namespace "sorting-queue" --create-namespace \
+        --set service.type="LoadBalancer" \
         --set auth.password=$RABBITMQ_PASSWORD \
         --set auth.erlangCookie=$RABBITMQ_ERLANG_COOKIE
 echo "Username      : user"
