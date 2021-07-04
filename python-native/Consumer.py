@@ -6,6 +6,14 @@ from pika.exchange_type import ExchangeType
 
 
 class MqttConsumer(object):
+
+    EXCHANGE = 'amq.direct'
+    EXCHANGE_TYPE = ExchangeType.direct
+    EXCHANGE_DURABLE = True
+    QUEUE = 'competition1'
+    QUEUE_DURABLE = True
+    ROUTING_KEY = 'competition1'
+
     def __init__(self, amqp_url, logger):
         self.should_reconnect = False
         self.was_consuming = False
@@ -81,9 +89,12 @@ class MqttConsumer(object):
         # how arbitrary data can be passed to the callback when it is called
         cb = functools.partial(
             self.on_exchange_declareok, userdata=exchange_name)
+        self._logger.info('Durability: %s', self.EXCHANGE_DURABLE)
+
         self._channel.exchange_declare(
             exchange=exchange_name,
             exchange_type=self.EXCHANGE_TYPE,
+            durable=self.EXCHANGE_DURABLE,
             callback=cb)
 
     def on_exchange_declareok(self, _unused_frame, userdata):
@@ -93,12 +104,12 @@ class MqttConsumer(object):
     def setup_queue(self, queue_name):
         self._logger.info('Declaring queue %s', queue_name)
         cb = functools.partial(self.on_queue_declareok, userdata=queue_name)
-        self._channel.queue_declare(queue=queue_name, callback=cb)
+        self._channel.queue_declare(queue=queue_name, callback=cb, durable=self.QUEUE_DURABLE)
 
     def on_queue_declareok(self, _unused_frame, userdata):
         queue_name = userdata
         self._logger.info('Binding %s to %s with %s', self.EXCHANGE, queue_name,
-                    self.ROUTING_KEY)
+                          self.ROUTING_KEY)
         cb = functools.partial(self.on_bindok, userdata=queue_name)
         self._channel.queue_bind(
             queue_name,
@@ -132,13 +143,13 @@ class MqttConsumer(object):
 
     def on_consumer_cancelled(self, method_frame):
         self._logger.info('Consumer was cancelled remotely, shutting down: %r',
-                    method_frame)
+                          method_frame)
         if self._channel:
             self._channel.close()
 
     def on_message(self, _unused_channel, basic_deliver, properties, body):
         self._logger.info('Received message # %s from %s: %s',
-                    basic_deliver.delivery_tag, properties.app_id, body)
+                          basic_deliver.delivery_tag, properties.app_id, body)
         self.acknowledge_message(basic_deliver.delivery_tag)
 
     def acknowledge_message(self, delivery_tag):
