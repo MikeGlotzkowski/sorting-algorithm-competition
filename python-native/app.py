@@ -22,8 +22,8 @@ dictConfig({
 
 app = Flask(__name__)
 
-@app.route('/')
-def hello_world():
+@app.route('/startreceive')
+def start_receive():
     amqp_url = "amqp://python-native:python-native@rabbitmq.sorting-queue.svc:5672/%2F"
     consumer = ReconnectingMqttConsumer(amqp_url, app.logger)
     consumer.run()

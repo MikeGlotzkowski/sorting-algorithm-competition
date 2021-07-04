@@ -1,4 +1,5 @@
 
+from Solver import Solver
 import functools
 import time
 import pika
@@ -150,6 +151,8 @@ class MqttConsumer(object):
     def on_message(self, _unused_channel, basic_deliver, properties, body):
         self._logger.info('Received message # %s from %s: %s',
                           basic_deliver.delivery_tag, properties.app_id, body)
+        solved = Solver(self._logger, body).solve()
+        self._logger.info('Solved task: %s', solved)
         self.acknowledge_message(basic_deliver.delivery_tag)
 
     def acknowledge_message(self, delivery_tag):
